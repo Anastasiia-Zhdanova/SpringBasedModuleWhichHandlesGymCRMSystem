@@ -1,0 +1,20 @@
+// initial_data.json
+{
+  "trainers": [
+    {
+      "firstName": "Piter",
+      "lastName": "Parker",
+      "specialization": "spider yoga",
+      "userId": 1
+    }
+  ],
+  "trainees": [
+    {
+      "firstName": "Gven",
+      "lastName": "Stacy",
+      "dateOfBirth": "1991-07-11",
+      "address": "1111 Avenida Principal",
+      "userId": 1
+    }
+  ]
+}
