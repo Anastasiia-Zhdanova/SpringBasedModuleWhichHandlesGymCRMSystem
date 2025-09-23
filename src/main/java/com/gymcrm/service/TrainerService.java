@@ -11,16 +11,9 @@ public class TrainerService extends AbstractUserService<Trainer> {
 
     private static final Logger logger = LoggerFactory.getLogger(TrainerService.class);
 
-    // Dependency injection
     public TrainerService(TrainerDAO trainerDAO) {
-        super(trainerDAO);
-    }
-
-    public void createTrainer(Trainer trainer) {
-        logger.info("Creating a new Trainer with first name: {}", trainer.getFirstName());
-        UserCredentialGenerator.generateAndSetCredentials(trainer);
-        create(trainer);
-        logger.info("Trainer created with username: {}", trainer.getUsername());
+        super();
+        this.setUserDAO(trainerDAO);
     }
 
     public Trainer updateTrainer(Trainer trainer) {

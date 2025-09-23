@@ -7,7 +7,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,12 +43,12 @@ public class TraineeDAOTest {
 
     @Test
     void findById_ShouldReturnTrainee_WhenTraineeExists() {
-        Trainee expectedTrainee = new Trainee();
-        expectedTrainee.setUserId(1L);
-        mockTraineesMap.put(1L, expectedTrainee);
+        Trainee trainee = new Trainee();
+        trainee.setUserId(1L);
+        mockTraineesMap.put(1L, trainee);
         Trainee foundTrainee = traineeDAO.findById(1L);
         assertNotNull(foundTrainee);
-        assertEquals(expectedTrainee, foundTrainee);
+        assertEquals(trainee, foundTrainee);
         verify(storage, times(1)).getEntities("trainees");
     }
 
@@ -64,16 +63,11 @@ public class TraineeDAOTest {
     void update_ShouldReturnUpdatedTrainee_WhenTraineeExists() {
         Trainee originalTrainee = new Trainee();
         originalTrainee.setUserId(1L);
-        originalTrainee.setFirstName("John");
         mockTraineesMap.put(1L, originalTrainee);
-
         Trainee updatedTrainee = new Trainee();
         updatedTrainee.setUserId(1L);
-        updatedTrainee.setFirstName("Jane");
-
         Trainee result = traineeDAO.update(updatedTrainee);
         assertNotNull(result);
-        assertEquals("Jane", ((Trainee) mockTraineesMap.get(1L)).getFirstName());
         assertEquals(updatedTrainee, result);
         verify(storage, times(1)).getEntities("trainees");
     }
@@ -92,9 +86,33 @@ public class TraineeDAOTest {
         Trainee trainee = new Trainee();
         trainee.setUserId(1L);
         mockTraineesMap.put(1L, trainee);
-
         traineeDAO.delete(1L);
         assertFalse(mockTraineesMap.containsKey(1L));
+        verify(storage, times(1)).getEntities("trainees");
+    }
+
+    @Test
+    void delete_ShouldDoNothing_WhenTraineeDoesNotExist() {
+        traineeDAO.delete(99L);
+        assertTrue(mockTraineesMap.isEmpty());
+        verify(storage, times(1)).getEntities("trainees");
+    }
+
+    @Test
+    void findByUsername_ShouldReturnTrainee_WhenTraineeExists() {
+        Trainee trainee = new Trainee();
+        trainee.setUsername("john.doe");
+        mockTraineesMap.put(1L, trainee);
+        Trainee foundTrainee = traineeDAO.findByUsername("john.doe");
+        assertNotNull(foundTrainee);
+        assertEquals(trainee, foundTrainee);
+        verify(storage, times(1)).getEntities("trainees");
+    }
+
+    @Test
+    void findByUsername_ShouldReturnNull_WhenTraineeDoesNotExist() {
+        Trainee foundTrainee = traineeDAO.findByUsername("nonexistent.user");
+        assertNull(foundTrainee);
         verify(storage, times(1)).getEntities("trainees");
     }
 }

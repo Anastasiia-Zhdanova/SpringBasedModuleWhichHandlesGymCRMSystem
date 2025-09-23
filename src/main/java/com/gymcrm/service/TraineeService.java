@@ -11,16 +11,9 @@ public class TraineeService extends AbstractUserService<Trainee> {
 
     private static final Logger logger = LoggerFactory.getLogger(TraineeService.class);
 
-    // Dependency injection
     public TraineeService(TraineeDAO traineeDAO) {
-        super(traineeDAO);
-    }
-
-    public void createTrainee(Trainee trainee) {
-        logger.info("Creating a new Trainee with first name: {}", trainee.getFirstName());
-        UserCredentialGenerator.generateAndSetCredentials(trainee);
-        create(trainee);
-        logger.info("Trainee created with username: {}", trainee.getUsername());
+        super();
+        this.setUserDAO(traineeDAO);
     }
 
     public Trainee updateTrainee(Trainee trainee) {

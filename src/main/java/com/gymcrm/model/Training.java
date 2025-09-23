@@ -2,7 +2,7 @@ package com.gymcrm.model;
 
 import java.util.Date;
 
-public class Training {
+public class Training extends User {
     private long id;
     private long traineeId;
     private long trainerId;

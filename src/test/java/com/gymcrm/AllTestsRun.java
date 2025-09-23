@@ -1,7 +1,7 @@
 package com.gymcrm;
 
 import com.gymcrm.dao.*;
-import com.gymcrm.service.UserCredentialGeneratorTest;
+import com.gymcrm.service.*;
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
 
@@ -11,9 +11,6 @@ import com.gymcrm.model.TrainerTest;
 import com.gymcrm.model.TrainingTest;
 import com.gymcrm.model.TrainingTypeTest;
 import com.gymcrm.model.UserTest;
-import com.gymcrm.service.TraineeServiceTest;
-import com.gymcrm.service.TrainerServiceTest;
-import com.gymcrm.service.TrainingServiceTest;
 import com.gymcrm.config.AppConfigTest;
 import com.gymcrm.config.PropertyConfigTest;
 
@@ -35,7 +32,8 @@ import com.gymcrm.config.PropertyConfigTest;
         PropertyConfigTest.class,
         InMemoryStorageTest.class,
         InMemoryStorageErrorTest.class,
-        UserCredentialGeneratorTest.class
+        UserCredentialGeneratorTest.class,
+        AbstractUserServiceTest.class
 })
 public class AllTestsRun {
 

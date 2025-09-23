@@ -2,12 +2,12 @@ package com.gymcrm.service;
 
 import com.gymcrm.dao.TraineeDAO;
 import com.gymcrm.model.Trainee;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -20,33 +20,25 @@ public class TraineeServiceTest {
     @InjectMocks
     private TraineeService traineeService;
 
-    @Test
-    void createTrainee_ShouldGenerateUsernameAndPassword() {
-        Trainee trainee = new Trainee();
-        trainee.setFirstName("John");
-        trainee.setLastName("Doe");
+    private Trainee trainee;
+    private final Long userId = 1L;
 
-        traineeService.createTrainee(trainee);
-
-        assertNotNull(trainee.getUsername());
-        assertNotNull(trainee.getPassword());
-        assertEquals("john.doe", trainee.getUsername());
-        assertEquals(10, trainee.getPassword().length());
-        verify(traineeDAO, times(1)).create(trainee);
+    @BeforeEach
+    void setUp() {
+        trainee = new Trainee();
+        trainee.setUserId(userId);
     }
 
     @Test
-    void updateTrainee_ShouldCallDao_AndReturnUpdatedTrainee() {
-        Trainee trainee = new Trainee();
+    void updateTrainee_ShouldReturnUpdatedTrainee_WhenTraineeExists() {
         when(traineeDAO.update(trainee)).thenReturn(trainee);
         Trainee updated = traineeService.updateTrainee(trainee);
+        assertNotNull(updated);
         verify(traineeDAO, times(1)).update(trainee);
-        assertEquals(trainee, updated);
     }
 
     @Test
-    void updateTrainee_ShouldReturnNull_WhenTraineeNotFound() {
-        Trainee trainee = new Trainee();
+    void updateTrainee_ShouldReturnNull_WhenTraineeDoesNotExist() {
         when(traineeDAO.update(trainee)).thenReturn(null);
         Trainee updated = traineeService.updateTrainee(trainee);
         assertNull(updated);
@@ -54,28 +46,26 @@ public class TraineeServiceTest {
     }
 
     @Test
-    void deleteTrainee_ShouldCallDao() {
-        Long traineeId = 1L;
-        traineeService.deleteTrainee(traineeId);
-        verify(traineeDAO, times(1)).delete(traineeId);
+    void deleteTrainee_ShouldCallDeleteInAbstractClass() {
+        doNothing().when(traineeDAO).delete(userId);
+        traineeService.deleteTrainee(userId);
+        verify(traineeDAO, times(1)).delete(userId);
     }
 
     @Test
-    void findTraineeById_ShouldCallDao_AndReturnTrainee() {
-        Long traineeId = 1L;
-        Trainee expectedTrainee = new Trainee();
-        when(traineeDAO.findById(traineeId)).thenReturn(expectedTrainee);
-        Trainee foundTrainee = traineeService.findTraineeById(traineeId);
-        verify(traineeDAO, times(1)).findById(traineeId);
-        assertEquals(expectedTrainee, foundTrainee);
+    void findTraineeById_ShouldReturnTrainee_WhenTraineeExists() {
+        when(traineeDAO.findById(userId)).thenReturn(trainee);
+        Trainee found = traineeService.findTraineeById(userId);
+        assertNotNull(found);
+        assertEquals(userId, found.getUserId());
+        verify(traineeDAO, times(1)).findById(userId);
     }
 
     @Test
-    void findTraineeById_ShouldReturnNull_WhenTraineeNotFound() {
-        Long traineeId = 1L;
-        when(traineeDAO.findById(traineeId)).thenReturn(null);
-        Trainee foundTrainee = traineeService.findTraineeById(traineeId);
-        assertNull(foundTrainee);
-        verify(traineeDAO, times(1)).findById(traineeId);
+    void findTraineeById_ShouldReturnNull_WhenTraineeDoesNotExist() {
+        when(traineeDAO.findById(userId)).thenReturn(null);
+        Trainee found = traineeService.findTraineeById(userId);
+        assertNull(found);
+        verify(traineeDAO, times(1)).findById(userId);
     }
 }

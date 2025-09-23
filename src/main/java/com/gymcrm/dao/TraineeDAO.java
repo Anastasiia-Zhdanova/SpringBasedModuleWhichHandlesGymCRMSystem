@@ -2,7 +2,6 @@ package com.gymcrm.dao;
 
 import com.gymcrm.model.Trainee;
 import org.springframework.stereotype.Repository;
-
 import java.util.concurrent.atomic.AtomicLong;
 
 @Repository
@@ -29,5 +28,15 @@ public class TraineeDAO extends AbstractDAO<Trainee> implements UserDAO<Trainee>
     @Override
     protected void setId(Trainee trainee, Long id) {
         trainee.setUserId(id);
+    }
+
+    @Override
+    public Trainee findByUsername(String username) {
+        return (Trainee) storage.getEntities(getNamespace()).values().stream()
+                .filter(obj -> obj instanceof Trainee)
+                .map(obj -> (Trainee) obj)
+                .filter(trainee -> trainee.getUsername().equals(username))
+                .findFirst()
+                .orElse(null);
     }
 }

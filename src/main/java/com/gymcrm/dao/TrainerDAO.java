@@ -29,4 +29,14 @@ public class TrainerDAO extends AbstractDAO<Trainer> implements UserDAO<Trainer>
     protected void setId(Trainer trainer, Long id) {
         trainer.setUserId(id);
     }
+
+    @Override
+    public Trainer findByUsername(String username) {
+        return (Trainer) storage.getEntities(getNamespace()).values().stream()
+                .filter(obj -> obj instanceof Trainer)
+                .map(obj -> (Trainer) obj)
+                .filter(trainer -> trainer.getUsername().equals(username))
+                .findFirst()
+                .orElse(null);
+    }
 }
