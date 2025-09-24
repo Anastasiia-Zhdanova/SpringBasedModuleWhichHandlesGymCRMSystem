@@ -5,34 +5,35 @@ import com.gymcrm.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class AbstractUserServiceTest {
+public abstract class AbstractUserServiceTest<T extends User, S extends AbstractUserService<T>, D extends UserDAO<T>> {
 
-    private static class ConcreteUserService extends AbstractUserService<User> {
-        public ConcreteUserService(UserDAO<User> userDAO) {
-            super();
-            this.setUserDAO(userDAO);
-        }
-    }
+    protected D userDAO;
+    protected S userService;
+    protected T user;
+    protected final Long userId = 1L;
 
-    @Mock
-    private UserDAO<User> userDAO;
+    protected abstract void setupMocks();
 
-    @InjectMocks
-    private ConcreteUserService abstractUserService;
+    protected abstract T createNewUserInstance();
 
-    private User user;
+    protected abstract T callSpecificUpdate(T user);
+
+    protected abstract void callSpecificDelete(Long userId);
+
+    protected abstract T callSpecificFindById(Long userId);
 
     @BeforeEach
     void setUp() {
-        user = new User();
+        setupMocks();
+
+        user = createNewUserInstance();
+        user.setUserId(userId);
     }
 
     @Test
@@ -41,9 +42,9 @@ public class AbstractUserServiceTest {
         user.setLastName("Doe");
 
         when(userDAO.findByUsername("john.doe")).thenReturn(null);
-        when(userDAO.create(any(User.class))).thenReturn(user);
+        when(userDAO.create(user)).thenReturn(user);
 
-        abstractUserService.create(user);
+        userService.create(user);
 
         assertNotNull(user.getUsername());
         assertNotNull(user.getPassword());
@@ -53,126 +54,108 @@ public class AbstractUserServiceTest {
     }
 
     @Test
-    void create_ShouldGenerateUniqueUsername_WithCounter_WhenUsernameExists() {
-        user.setFirstName("Jane");
+    void create_ShouldGenerateUniqueUsernameWhenCollision() {
+        user.setFirstName("John");
         user.setLastName("Doe");
-        User existingUser = new User();
 
-        when(userDAO.findByUsername("jane.doe")).thenReturn(existingUser);
-        when(userDAO.findByUsername("jane.doe1")).thenReturn(null);
+        when(userDAO.findByUsername("john.doe")).thenReturn(createNewUserInstance());
+        when(userDAO.findByUsername("john.doe1")).thenReturn(null);
+        when(userDAO.create(user)).thenReturn(user);
 
-        abstractUserService.create(user);
+        userService.create(user);
 
-        assertNotNull(user.getUsername());
-        assertEquals("jane.doe1", user.getUsername());
-        verify(userDAO, times(2)).findByUsername(anyString());
+        assertEquals("john.doe1", user.getUsername());
+        verify(userDAO, times(1)).create(user);
+        verify(userDAO, times(1)).findByUsername("john.doe");
+        verify(userDAO, times(1)).findByUsername("john.doe1");
+    }
+
+    @Test
+    void generateUserName_ShouldHandleEmptyFirstName() {
+        user.setFirstName("");
+        user.setLastName("Smith");
+
+        when(userDAO.findByUsername("smith")).thenReturn(null);
+        when(userDAO.create(user)).thenReturn(user);
+
+        userService.create(user);
+
+        assertEquals("smith", user.getUsername());
         verify(userDAO, times(1)).create(user);
     }
 
     @Test
-    void create_ShouldGenerateUsername_WithOnlyFirstName() {
-        user.setFirstName("Mike");
-        user.setLastName(null);
-
-        when(userDAO.findByUsername("mike")).thenReturn(null);
-        when(userDAO.create(any(User.class))).thenReturn(user);
-
-        abstractUserService.create(user);
-
-        assertEquals("mike", user.getUsername());
-    }
-
-    @Test
-    void create_ShouldGenerateUsername_WithOnlyLastName() {
-        user.setFirstName(null);
-        user.setLastName("Smith");
-
-        when(userDAO.findByUsername("smith")).thenReturn(null);
-        when(userDAO.create(any(User.class))).thenReturn(user);
-
-        abstractUserService.create(user);
-
-        assertEquals("smith", user.getUsername());
-    }
-
-    @Test
-    void create_ShouldGenerateUsername_WithEmptyStrings() {
-        user.setFirstName("");
+    void generateUserName_ShouldHandleEmptyLastName() {
+        user.setFirstName("Alex");
         user.setLastName("");
 
-        when(userDAO.findByUsername("")).thenReturn(null);
-        when(userDAO.create(any(User.class))).thenReturn(user);
+        when(userDAO.findByUsername("alex")).thenReturn(null);
+        when(userDAO.create(user)).thenReturn(user);
 
-        abstractUserService.create(user);
+        userService.create(user);
 
-        assertEquals("", user.getUsername());
+        assertEquals("alex", user.getUsername());
+        verify(userDAO, times(1)).create(user);
     }
 
     @Test
-    void create_ShouldGenerateUsername_WithNullValues() {
+    void generateUserName_ShouldHandleBothEmpty() {
         user.setFirstName(null);
         user.setLastName(null);
 
         when(userDAO.findByUsername("")).thenReturn(null);
-        when(userDAO.create(any(User.class))).thenReturn(user);
+        when(userDAO.create(user)).thenReturn(user);
 
-        abstractUserService.create(user);
+        userService.create(user);
 
         assertEquals("", user.getUsername());
+        verify(userDAO, times(1)).create(user);
+        verify(userDAO, times(1)).findByUsername("");
     }
 
-
     @Test
-    void update_ShouldReturnUpdatedUser_WhenUserExists() {
-        user.setUserId(1L);
+    void specificUpdate_ShouldReturnUpdatedUser_WhenUserExists() {
         when(userDAO.update(user)).thenReturn(user);
+        T updated = callSpecificUpdate(user);
 
-        User updatedUser = abstractUserService.update(user);
-
-        assertNotNull(updatedUser);
+        assertNotNull(updated);
         verify(userDAO, times(1)).update(user);
+        assertEquals(userId, updated.getUserId());
     }
 
     @Test
-    void update_ShouldReturnNull_WhenUserDoesNotExist() {
-        user.setUserId(99L);
+    void specificUpdate_ShouldReturnNull_WhenUserDoesNotExist() {
         when(userDAO.update(user)).thenReturn(null);
+        T updated = callSpecificUpdate(user);
 
-        User updatedUser = abstractUserService.update(user);
-
-        assertNull(updatedUser);
+        assertNull(updated);
         verify(userDAO, times(1)).update(user);
     }
 
     @Test
-    void delete_ShouldCallDaoDeleteMethod() {
-        Long userId = 1L;
+    void specificDelete_ShouldCallDaoDeleteMethod() {
         doNothing().when(userDAO).delete(userId);
-
-        abstractUserService.delete(userId);
+        callSpecificDelete(userId);
 
         verify(userDAO, times(1)).delete(userId);
     }
 
     @Test
-    void findById_ShouldReturnUser_WhenUserExists() {
-        Long userId = 1L;
+    void specificFindById_ShouldReturnUser_WhenUserExists() {
         when(userDAO.findById(userId)).thenReturn(user);
+        T found = callSpecificFindById(userId);
 
-        User foundUser = abstractUserService.findById(userId);
-
-        assertNotNull(foundUser);
+        assertNotNull(found);
+        assertEquals(userId, found.getUserId());
         verify(userDAO, times(1)).findById(userId);
     }
 
     @Test
-    void findById_ShouldReturnNull_WhenUserDoesNotExist() {
-        Long userId = 99L;
+    void specificFindById_ShouldReturnNull_WhenUserDoesNotExist() {
         when(userDAO.findById(userId)).thenReturn(null);
+        T found = callSpecificFindById(userId);
 
-        User foundUser = abstractUserService.findById(userId);
-
-        assertNull(foundUser);
+        assertNull(found);
         verify(userDAO, times(1)).findById(userId);
     }
 }
